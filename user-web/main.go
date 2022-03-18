@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Dlimingliang/shop-api/user-web/initialize"
+	"go.uber.org/zap"
 )
 
 var (
@@ -12,10 +13,14 @@ var (
 )
 
 func main() {
+	//初始化logger
+	initialize.InitLogger()
+	//初始化路由
 	ginRouter := initialize.Routers()
 
 	flag.Parse()
-	if err := ginRouter.Run(fmt.Sprintf("%s:%d", ip, port)); err != nil {
-		panic(err)
+	zap.S().Info(fmt.Sprintf("shop-api项目启动, 访问地址: http://%s:%d", *ip, *port))
+	if err := ginRouter.Run(fmt.Sprintf("%s:%d", *ip, *port)); err != nil {
+		zap.S().Panic(err)
 	}
 }
