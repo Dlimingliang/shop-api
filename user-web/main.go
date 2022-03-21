@@ -9,7 +9,7 @@ import (
 
 var (
 	ip   = flag.String("ip", "0.0.0.0", "IP")
-	port = flag.Int("port", 8090, "端口号")
+	port = flag.Int("port", 8070, "端口号")
 )
 
 func main() {

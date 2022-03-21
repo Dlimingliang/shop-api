@@ -47,7 +47,7 @@ func GetUserList(ctx *gin.Context) {
 	ip := "127.0.0.1"
 	port := 8090
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, &port))
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
 		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
 	}
@@ -58,7 +58,7 @@ func GetUserList(ctx *gin.Context) {
 		PageSize: 0,
 	})
 	if err != nil {
-		zap.S().Errorw("[GetUserList] 查询 [用户列表]失败")
+		zap.S().Errorw("[GetUserList] 查询 [用户列表]失败", "msg", err.Error())
 		HandlerGrpcErrToHttpErr(err, ctx)
 		return
 	}
