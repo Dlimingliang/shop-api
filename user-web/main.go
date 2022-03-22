@@ -15,6 +15,8 @@ var (
 func main() {
 	//初始化logger
 	initialize.InitLogger()
+	//初始化config
+	initialize.InitConfig()
 	//初始化路由
 	ginRouter := initialize.Routers()
 

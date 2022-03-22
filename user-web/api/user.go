@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/Dlimingliang/shop-api/user-web/global"
 	"github.com/Dlimingliang/shop-api/user-web/global/response"
 	"net/http"
 	"strconv"
@@ -44,10 +45,9 @@ func HandlerGrpcErrToHttpErr(err error, ctx *gin.Context) {
 }
 
 func GetUserList(ctx *gin.Context) {
-	ip := "127.0.0.1"
-	port := 8090
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
+		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
 	if err != nil {
 		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
 	}
