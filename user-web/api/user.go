@@ -53,9 +53,13 @@ func GetUserList(ctx *gin.Context) {
 	}
 
 	userClient := proto.NewUserClient(conn)
+	page := ctx.DefaultQuery("page", "0")
+	pageInt, _ := strconv.Atoi(page)
+	pageSize := ctx.DefaultQuery("pageSize", "10")
+	pageSizeInt, _ := strconv.Atoi(pageSize)
 	rsp, err := userClient.GetUserPage(context.Background(), &proto.UserPageRequest{
-		Page:     0,
-		PageSize: 0,
+		Page:     uint32(pageInt),
+		PageSize: uint32(pageSizeInt),
 	})
 	if err != nil {
 		zap.S().Errorw("[GetUserList] 查询 [用户列表]失败", "msg", err.Error())
