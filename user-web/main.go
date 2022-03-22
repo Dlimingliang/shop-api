@@ -19,6 +19,8 @@ func main() {
 	initialize.InitConfig()
 	//初始化路由
 	ginRouter := initialize.Routers()
+	//初始换validator翻译
+	initialize.InitValidatorTrans("zh")
 
 	flag.Parse()
 	zap.S().Info(fmt.Sprintf("shop-api项目启动, 访问地址: http://%s:%d", *ip, *port))

@@ -3,10 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/Dlimingliang/shop-api/user-web/forms"
 	"github.com/Dlimingliang/shop-api/user-web/global"
 	"github.com/Dlimingliang/shop-api/user-web/global/response"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +20,26 @@ import (
 
 	"github.com/Dlimingliang/shop-api/user-web/proto"
 )
+
+func HandlerValidatorErr(err error, ctx *gin.Context) {
+	errs, ok := err.(validator.ValidationErrors)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}
+	ctx.JSON(http.StatusBadRequest, gin.H{
+		"error": removeTopSruct(errs.Translate(global.ValidatorTrans)),
+	})
+}
+
+func removeTopSruct(fileds map[string]string) map[string]string {
+	rsp := map[string]string{}
+	for field, err := range fileds {
+		rsp[field[strings.Index(field, ".")+1:]] = err
+	}
+	return rsp
+}
 
 func HandlerGrpcErrToHttpErr(err error, ctx *gin.Context) {
 	if err != nil {
@@ -79,4 +102,13 @@ func GetUserList(ctx *gin.Context) {
 		result = append(result, userResp)
 	}
 	ctx.JSON(http.StatusOK, result)
+}
+
+func PasswordLogin(ctx *gin.Context) {
+	//表单验证
+	passwordLoginForm := forms.PasswordLoginForm{}
+	if err := ctx.ShouldBind(&passwordLoginForm); err != nil {
+		HandlerValidatorErr(err, ctx)
+		return
+	}
 }
