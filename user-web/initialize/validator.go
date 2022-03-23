@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"fmt"
-	"github.com/Dlimingliang/shop-api/user-web/global"
 	"reflect"
 	"strings"
 
@@ -13,7 +12,32 @@ import (
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
 	zhtranslations "github.com/go-playground/validator/v10/translations/zh"
+	"go.uber.org/zap"
+
+	"github.com/Dlimingliang/shop-api/user-web/custom_validator"
+	"github.com/Dlimingliang/shop-api/user-web/global"
 )
+
+func InitValidator(local string) {
+	//初始化翻译
+	InitValidatorTrans(local)
+	//注册自定义验证器
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		err := v.RegisterValidation("mobile", custom_validator.ValidateMobile)
+		if err != nil {
+			zap.S().Panic("注册手机号验证器失败", err.Error())
+		}
+		err = v.RegisterTranslation("mobile", global.ValidatorTrans, func(ut ut.Translator) error {
+			return ut.Add("mobile", "{0} 手机号码不合法!", true)
+		}, func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("mobile", fe.Field())
+			return t
+		})
+		if err != nil {
+			zap.S().Panic("注册手机号翻译器失败", err.Error())
+		}
+	}
+}
 
 func InitValidatorTrans(locale string) (err error) {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
