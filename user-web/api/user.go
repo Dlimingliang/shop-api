@@ -45,17 +45,17 @@ func HandlerGrpcErrToHttpErr(err error, ctx *gin.Context) {
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			switch s.Code() {
+			case codes.InvalidArgument:
+				ctx.JSON(http.StatusBadRequest, gin.H{
+					"msg": "参数错误",
+				})
 			case codes.NotFound:
 				ctx.JSON(http.StatusNotFound, gin.H{
 					"msg": s.Message(),
 				})
 			case codes.Internal:
 				ctx.JSON(http.StatusInternalServerError, gin.H{
-					"msg": "内部错误",
-				})
-			case codes.InvalidArgument:
-				ctx.JSON(http.StatusBadRequest, gin.H{
-					"msg": "参数错误",
+					"msg": "系统内部错误",
 				})
 			default:
 				ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -73,6 +73,7 @@ func GetUserList(ctx *gin.Context) {
 		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
 	if err != nil {
 		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
+		return
 	}
 
 	userClient := proto.NewUserClient(conn)
@@ -110,5 +111,35 @@ func PasswordLogin(ctx *gin.Context) {
 	if err := ctx.ShouldBind(&passwordLoginForm); err != nil {
 		HandlerValidatorErr(err, ctx)
 		return
+	}
+
+	//根据电话查询用户
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
+		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
+	if err != nil {
+		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
+	}
+	userClient := proto.NewUserClient(conn)
+
+	//查询用户是否存在
+	rsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: passwordLoginForm.Mobile})
+	if err != nil {
+		HandlerGrpcErrToHttpErr(err, ctx)
+		return
+	}
+
+	//验证密码正确性
+	ok, err := userClient.CheckPassword(context.Background(), &proto.PasswordCheckRequest{
+		Password:          passwordLoginForm.Password,
+		EncryptedPassword: rsp.Password,
+	})
+	if err != nil {
+		HandlerGrpcErrToHttpErr(err, ctx)
+		return
+	}
+	if ok.Success {
+		ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功"})
+	} else {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"msg": "用户名或密码不正确"})
 	}
 }
