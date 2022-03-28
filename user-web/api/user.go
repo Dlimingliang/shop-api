@@ -3,21 +3,24 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/Dlimingliang/shop-api/user-web/forms"
-	"github.com/Dlimingliang/shop-api/user-web/global"
-	"github.com/Dlimingliang/shop-api/user-web/global/response"
-	"github.com/go-playground/validator/v10"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/Dlimingliang/shop-api/user-web/forms"
+	"github.com/Dlimingliang/shop-api/user-web/global"
+	"github.com/Dlimingliang/shop-api/user-web/global/response"
+	"github.com/Dlimingliang/shop-api/user-web/middlewares"
+	"github.com/Dlimingliang/shop-api/user-web/models"
 	"github.com/Dlimingliang/shop-api/user-web/proto"
 )
 
@@ -122,7 +125,7 @@ func PasswordLogin(ctx *gin.Context) {
 	userClient := proto.NewUserClient(conn)
 
 	//查询用户是否存在
-	rsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: passwordLoginForm.Mobile})
+	userRsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: passwordLoginForm.Mobile})
 	if err != nil {
 		HandlerGrpcErrToHttpErr(err, ctx)
 		return
@@ -131,15 +134,32 @@ func PasswordLogin(ctx *gin.Context) {
 	//验证密码正确性
 	ok, err := userClient.CheckPassword(context.Background(), &proto.PasswordCheckRequest{
 		Password:          passwordLoginForm.Password,
-		EncryptedPassword: rsp.Password,
+		EncryptedPassword: userRsp.Password,
 	})
 	if err != nil {
 		HandlerGrpcErrToHttpErr(err, ctx)
 		return
 	}
 	if ok.Success {
-		ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功"})
+		j := middlewares.NewJWT()
+		claims := models.CustomClaims{
+			UserId:   userRsp.Id,
+			UserName: userRsp.UserName,
+			RoleId:   int(userRsp.Role),
+			StandardClaims: jwt.StandardClaims{
+				NotBefore: time.Now().Unix() - 1000, // 签名生效时间
+				ExpiresAt: time.Now().Unix() + 3600, // 签名过期时间
+				Issuer:    "lml",                    // 签名颁发者
+			},
+		}
+		token, err := j.CreateToken(claims)
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{
+				"msg": err.Error(),
+			})
+		}
+		ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功", "Token": token})
 	} else {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"msg": "用户名或密码不正确"})
+		ctx.JSON(http.StatusOK, gin.H{"msg": "用户名或密码不正确"})
 	}
 }
