@@ -18,9 +18,9 @@ import (
 
 	"github.com/Dlimingliang/shop-api/user-web/forms"
 	"github.com/Dlimingliang/shop-api/user-web/global"
-	"github.com/Dlimingliang/shop-api/user-web/global/response"
 	"github.com/Dlimingliang/shop-api/user-web/middlewares"
 	"github.com/Dlimingliang/shop-api/user-web/models"
+	"github.com/Dlimingliang/shop-api/user-web/models/response"
 	"github.com/Dlimingliang/shop-api/user-web/proto"
 )
 
