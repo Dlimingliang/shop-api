@@ -5,7 +5,6 @@ import (
 	"github.com/Dlimingliang/shop-api/user-web/global"
 	"github.com/Dlimingliang/shop-api/user-web/models"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -22,9 +21,9 @@ func JWTAuth() gin.HandlerFunc {
 	return func(context *gin.Context) {
 
 		//不需要进行登录验证的url
-		if strings.Contains(context.Request.RequestURI, "v1/user/login") {
-			return
-		}
+		//if strings.Contains(context.Request.RequestURI, "v1/user/login") {
+		//	return
+		//}
 
 		token := context.GetHeader("token")
 		if token == "" {
@@ -53,6 +52,7 @@ func JWTAuth() gin.HandlerFunc {
 
 		//继续由下一路由器处理，并且传递claims
 		context.Set(global.JWTGinContextKey, claims)
+		context.Next()
 	}
 }
 
