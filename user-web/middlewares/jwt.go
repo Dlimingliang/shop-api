@@ -12,10 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	GinContextKey string = "claims"
-)
-
 var (
 	TokenExpired     error = errors.New("Token 已过期")
 	TokenNotValidYet error = errors.New("Token 无效")
@@ -56,7 +52,7 @@ func JWTAuth() gin.HandlerFunc {
 		}
 
 		//继续由下一路由器处理，并且传递claims
-		context.Set(GinContextKey, claims)
+		context.Set(global.JWTGinContextKey, claims)
 	}
 }
 

@@ -6,6 +6,10 @@ import (
 	"github.com/Dlimingliang/shop-api/user-web/config"
 )
 
+const (
+	JWTGinContextKey string = "claims"
+)
+
 var (
 	ServerConfig   = &config.ServerConfig{}
 	ValidatorTrans ut.Translator
