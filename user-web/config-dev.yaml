@@ -2,3 +2,6 @@ name: "user-web"
 user-srv:
   host: 127.0.0.1
   port: 8090
+
+jwt:
+  sign-key: a87x80wfebei90f8532f16f423b125616dea9b75

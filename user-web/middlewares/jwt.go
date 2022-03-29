@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"github.com/Dlimingliang/shop-api/user-web/global"
 	"github.com/Dlimingliang/shop-api/user-web/models"
 	"net/http"
 	"strings"
@@ -12,7 +13,6 @@ import (
 )
 
 const (
-	SignKey       string = "a87x80wfebei90f8532f16f423b125616dea9b75"
 	GinContextKey string = "claims"
 )
 
@@ -66,7 +66,7 @@ type JWT struct {
 
 func NewJWT() *JWT {
 	return &JWT{
-		[]byte(SignKey),
+		[]byte(global.ServerConfig.JWTConfig.SignKey),
 	}
 }
 func (j *JWT) CreateToken(claims models.CustomClaims) (string, error) {

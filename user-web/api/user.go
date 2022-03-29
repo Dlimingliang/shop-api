@@ -121,6 +121,7 @@ func PasswordLogin(ctx *gin.Context) {
 		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
 	if err != nil {
 		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
+		return
 	}
 	userClient := proto.NewUserClient(conn)
 
@@ -147,18 +148,18 @@ func PasswordLogin(ctx *gin.Context) {
 			UserName: userRsp.UserName,
 			RoleId:   int(userRsp.Role),
 			StandardClaims: jwt.StandardClaims{
-				NotBefore: time.Now().Unix() - 1000, // 签名生效时间
-				ExpiresAt: time.Now().Unix() + 3600, // 签名过期时间
-				Issuer:    "lml",                    // 签名颁发者
+				NotBefore: time.Now().Unix() - 1000,     // 签名生效时间
+				ExpiresAt: time.Now().Unix() + 60*60*24, // 签名过期时间
+				Issuer:    "lml",                        // 签名颁发者
 			},
 		}
 		token, err := j.CreateToken(claims)
 		if err != nil {
-			ctx.JSON(http.StatusOK, gin.H{
+			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"msg": err.Error(),
 			})
 		}
-		ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功", "Token": token})
+		ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功", "token": token})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"msg": "用户名或密码不正确"})
 	}
