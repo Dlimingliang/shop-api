@@ -116,6 +116,11 @@ func PasswordLogin(ctx *gin.Context) {
 		return
 	}
 
+	//验证验证码是否正确
+	if !store.Verify(passwordLoginForm.CaptchaID, passwordLoginForm.Captcha, true) {
+		ctx.JSON(http.StatusOK, gin.H{"msg": "验证码错误"})
+		return
+	}
 	//根据电话查询用户
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
 		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
