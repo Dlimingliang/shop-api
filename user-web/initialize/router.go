@@ -22,6 +22,7 @@ func Routers() *gin.Engine {
 	//设置路由
 	ginRouter.POST("login", api.PasswordLogin)
 	ginRouter.GET("captcha", api.GetCaptcha)
+	ginRouter.POST("send_sms", api.SendSms)
 	apiGroup := ginRouter.Group("v1")
 	apiGroup.Use(middlewares.JWTAuth()).Use(middlewares.IsAdmin())
 	router.InitUserRouter(apiGroup)
