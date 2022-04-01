@@ -5,3 +5,8 @@ user-srv:
 
 jwt:
   sign-key: a87x80wfebei90f8532f16f423b125616dea9b75
+
+redis:
+  host: 1.1.1.1
+  port: 6379
+  password: 11111
