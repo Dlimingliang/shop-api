@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"net/http"
 	"strconv"
 	"strings"
@@ -168,4 +169,77 @@ func PasswordLogin(ctx *gin.Context) {
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"msg": "用户名或密码不正确"})
 	}
+}
+
+func Register(ctx *gin.Context) {
+	//表单验证
+	registerForm := forms.RegisterForm{}
+	if err := ctx.ShouldBind(&registerForm); err != nil {
+		HandlerValidatorErr(err, ctx)
+		return
+	}
+
+	//验证验证码
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", global.ServerConfig.RedisConfig.Host, global.ServerConfig.RedisConfig.Port),
+		Password: global.ServerConfig.RedisConfig.Password,
+	})
+	smsCode, err := rdb.Get(context.Background(), registerForm.Mobile).Result()
+	if err == redis.Nil || registerForm.SmsCode != smsCode {
+		//验证码不存在
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "验证码错误",
+		})
+		return
+	}
+
+	//连接用户服务
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
+		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
+	if err != nil {
+		zap.S().Errorw("[Register] 连接 [用户服务失败]", "msg", err.Error())
+		return
+	}
+	userClient := proto.NewUserClient(conn)
+	//暂时不验证是否已经注册
+	////验证是否注册
+	//userRsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: registerForm.Mobile})
+	//if err != nil {
+	//	HandlerGrpcErrToHttpErr(err, ctx)
+	//	return
+	//}
+	//if userRsp != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"msg": "用户已存在",
+	//	})
+	//	return
+	//}
+	//注册用户,并且直接登录
+	user, err := userClient.CreateUser(context.Background(), &proto.CreateUserRequest{
+		UserName: registerForm.Mobile,
+		Mobile:   registerForm.Mobile,
+		Password: registerForm.Password,
+	})
+	if err != nil {
+		HandlerGrpcErrToHttpErr(err, ctx)
+		return
+	}
+	j := middlewares.NewJWT()
+	claims := models.CustomClaims{
+		UserId:   user.Id,
+		UserName: user.UserName,
+		RoleId:   int(user.Role),
+		StandardClaims: jwt.StandardClaims{
+			NotBefore: time.Now().Unix() - 1000,     // 签名生效时间
+			ExpiresAt: time.Now().Unix() + 60*60*24, // 签名过期时间
+			Issuer:    "lml",                        // 签名颁发者
+		},
+	}
+	token, err := j.CreateToken(claims)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"msg": err.Error(),
+		})
+	}
+	ctx.JSON(http.StatusOK, gin.H{"msg": "登录成功", "token": token})
 }

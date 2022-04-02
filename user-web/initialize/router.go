@@ -23,6 +23,7 @@ func Routers() *gin.Engine {
 	ginRouter.POST("login", api.PasswordLogin)
 	ginRouter.GET("captcha", api.GetCaptcha)
 	ginRouter.POST("send_sms", api.SendSms)
+	ginRouter.POST("register", api.Register)
 	apiGroup := ginRouter.Group("v1")
 	apiGroup.Use(middlewares.JWTAuth()).Use(middlewares.IsAdmin())
 	router.InitUserRouter(apiGroup)
