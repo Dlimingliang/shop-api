@@ -22,7 +22,7 @@ func InitSrvConn() {
 	if err != nil {
 		zap.S().Panic("连接consul失败", err.Error())
 	}
-	data, err := client.Agent().ServicesWithFilter(fmt.Sprintf(`service == user-srv`))
+	data, err := client.Agent().ServicesWithFilter(`Service == "user-srv"`)
 	for _, value := range data {
 		userSrvHost = value.Address
 		userSrvPort = value.Port

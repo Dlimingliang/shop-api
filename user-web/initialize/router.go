@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/Dlimingliang/shop-api/user-web/api"
-	"github.com/Dlimingliang/shop-api/user-web/middlewares"
 	"github.com/Dlimingliang/shop-api/user-web/router"
 )
 
@@ -25,7 +24,8 @@ func Routers() *gin.Engine {
 	ginRouter.POST("send_sms", api.SendSms)
 	ginRouter.POST("register", api.Register)
 	apiGroup := ginRouter.Group("v1")
-	apiGroup.Use(middlewares.JWTAuth()).Use(middlewares.IsAdmin())
+	//测试接口，暂时不限制登录
+	//apiGroup.Use(middlewares.JWTAuth()).Use(middlewares.IsAdmin())
 	router.InitUserRouter(apiGroup)
 	return ginRouter
 }
