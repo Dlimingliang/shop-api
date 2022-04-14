@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,8 +11,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -72,20 +71,11 @@ func HandlerGrpcErrToHttpErr(err error, ctx *gin.Context) {
 }
 
 func GetUserList(ctx *gin.Context) {
-
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
-		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
-	if err != nil {
-		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
-		return
-	}
-
-	userClient := proto.NewUserClient(conn)
 	page := ctx.DefaultQuery("page", "0")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize := ctx.DefaultQuery("pageSize", "10")
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	rsp, err := userClient.GetUserPage(context.Background(), &proto.UserPageRequest{
+	rsp, err := global.UserSrvClient.GetUserPage(context.Background(), &proto.UserPageRequest{
 		Page:     uint32(pageInt),
 		PageSize: uint32(pageSizeInt),
 	})
@@ -122,24 +112,16 @@ func PasswordLogin(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"msg": "验证码错误"})
 		return
 	}
-	//根据电话查询用户
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
-		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
-	if err != nil {
-		zap.S().Errorw("[GetUserList] 连接 [用户服务失败]", "msg", err.Error())
-		return
-	}
-	userClient := proto.NewUserClient(conn)
 
 	//查询用户是否存在
-	userRsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: passwordLoginForm.Mobile})
+	userRsp, err := global.UserSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: passwordLoginForm.Mobile})
 	if err != nil {
 		HandlerGrpcErrToHttpErr(err, ctx)
 		return
 	}
 
 	//验证密码正确性
-	ok, err := userClient.CheckPassword(context.Background(), &proto.PasswordCheckRequest{
+	ok, err := global.UserSrvClient.CheckPassword(context.Background(), &proto.PasswordCheckRequest{
 		Password:          passwordLoginForm.Password,
 		EncryptedPassword: userRsp.Password,
 	})
@@ -193,29 +175,8 @@ func Register(ctx *gin.Context) {
 		return
 	}
 
-	//连接用户服务
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserServiceConfig.Host,
-		global.ServerConfig.UserServiceConfig.Port), grpc.WithInsecure())
-	if err != nil {
-		zap.S().Errorw("[Register] 连接 [用户服务失败]", "msg", err.Error())
-		return
-	}
-	userClient := proto.NewUserClient(conn)
-	//暂时不验证是否已经注册
-	////验证是否注册
-	//userRsp, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: registerForm.Mobile})
-	//if err != nil {
-	//	HandlerGrpcErrToHttpErr(err, ctx)
-	//	return
-	//}
-	//if userRsp != nil {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"msg": "用户已存在",
-	//	})
-	//	return
-	//}
 	//注册用户,并且直接登录
-	user, err := userClient.CreateUser(context.Background(), &proto.CreateUserRequest{
+	user, err := global.UserSrvClient.CreateUser(context.Background(), &proto.CreateUserRequest{
 		UserName: registerForm.Mobile,
 		Mobile:   registerForm.Mobile,
 		Password: registerForm.Password,

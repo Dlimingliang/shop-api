@@ -7,6 +7,10 @@ jwt:
   sign-key: a87x80wfebei90f8532f16f423b125616dea9b75
 
 redis:
-  host: 1.1.1.1
+  host: 127.0.0.1
   port: 6379
-  password: 11111
+  password: 654321
+
+consol:
+  host: 127.0.0.1
+  port: 8500
