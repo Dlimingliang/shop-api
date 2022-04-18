@@ -1,16 +1,10 @@
 package config
 
 type ServerConfig struct {
-	Name              string             `mapstructure:"name"`
-	UserServiceConfig UserSrcConfig      `mapstructure:"user-srv"`
-	JWTConfig         JWTAuthConfig      `mapstructure:"jwt"`
-	RedisConfig       RedisServerConfig  `mapstructure:"redis"`
-	ConsulConfig      ConsulServerConfig `mapstructure:"consul"`
-}
-
-type UserSrcConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Name         string             `mapstructure:"name"`
+	JWTConfig    JWTAuthConfig      `mapstructure:"jwt"`
+	RedisConfig  RedisServerConfig  `mapstructure:"redis"`
+	ConsulConfig ConsulServerConfig `mapstructure:"consul"`
 }
 
 type JWTAuthConfig struct {
