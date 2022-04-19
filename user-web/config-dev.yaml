@@ -8,6 +8,6 @@ redis:
   port: 6379
   password: 654321
 
-consol:
-  host: 127.0.0.1
+consul:
+  host: 172.0.0.1
   port: 8500
