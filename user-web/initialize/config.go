@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"fmt"
-	"github.com/Dlimingliang/shop-api/user-web/global"
 
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
@@ -12,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/Dlimingliang/shop-api/user-web/config"
+	"github.com/Dlimingliang/shop-api/user-web/global"
 )
 
 func InitConfig() {
@@ -59,12 +59,16 @@ func InitConfig() {
 			ServerConfigs: serverConfigs,
 		},
 	)
-	zap.S().Panic(err)
+	if err != nil {
+		zap.S().Panic(err.Error())
+	}
 
 	data, err := configClient.GetConfig(vo.ConfigParam{
 		DataId: nacosConfig.DataId,
 		Group:  nacosConfig.Group})
-	zap.S().Panic(err)
+	if err != nil {
+		zap.S().Panic(err)
+	}
 
 	err = yaml.Unmarshal([]byte(data), global.ServerConfig)
 	if err != nil {
@@ -79,5 +83,7 @@ func InitConfig() {
 			fmt.Println("group:" + group + ", dataId:" + dataId + ", data:" + data)
 		},
 	})
-	zap.S().Error(err)
+	if err != nil {
+		zap.S().Error(err)
+	}
 }
