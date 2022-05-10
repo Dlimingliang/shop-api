@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Dlimingliang/shop-api/user-web/global"
-	"github.com/Dlimingliang/shop-api/user-web/initialize"
+
 	"go.uber.org/zap"
+
+	"github.com/Dlimingliang/shop-api/goods-web/global"
+	"github.com/Dlimingliang/shop-api/goods-web/initialize"
 )
 
 var (
@@ -24,7 +26,7 @@ func main() {
 	initialize.InitValidator("zh")
 	//初始化grpc服务连接
 	initialize.InitSrvConn()
-	defer global.UserSrvConn.Close()
+	defer global.GoodsSrvConn.Close()
 
 	flag.Parse()
 	zap.S().Info(fmt.Sprintf("shop-api项目启动, 访问地址: http://%s:%d", *ip, *port))
